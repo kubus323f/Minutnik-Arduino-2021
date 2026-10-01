@@ -1,0 +1,32 @@
+name: Frieren render validation
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+jobs:
+  build-and-render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get Blender 4.5.14 LTS
+        run: |
+          curl -L --retry 4 -o blender.tar.xz https://download.blender.org/release/Blender4.5/blender-4.5.14-linux-x64.tar.xz
+          tar -xf blender.tar.xz
+          mv blender-4.5.14-linux-x64 blender
+      - name: Get MPFB2
+        run: git clone --depth 1 https://github.com/makehumancommunity/mpfb2.git
+      - name: Generate, rig and render
+        run: ./blender/blender --background --factory-startup --python ci/build_frieren.py
+      - name: Verify outputs
+        run: |
+          test -s out/Frieren_realistic_anatomy_rigged.blend
+          test -s out/frieren_preview_3q.png
+          test -s out/frieren_preview_front.png
+          ls -lh out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frieren-render-validation
+          path: out/
+          if-no-files-found: error
+          retention-days: 1
