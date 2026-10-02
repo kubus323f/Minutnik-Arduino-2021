@@ -26,18 +26,18 @@ jobs:
           ./blender/blender --command extension repo-add ci_local --name "CI Local" --directory "$PWD/.blender_extensions" --clear-all
           ./blender/blender --command extension install-file -r ci_local -e "$PWD/mpfb.zip"
           ./blender/blender --command extension list
-      - name: Generate, rig and render
-        run: ./blender/blender --background --python ci/run_frieren.py
+      - name: Render corrected female anatomy
+        run: ./blender/blender --background --python ci/anatomy_check.py
       - name: Verify outputs
         run: |
-          test -s out/Frieren_realistic_anatomy_rigged.blend
-          test -s out/frieren_preview_3q.png
-          test -s out/frieren_preview_front.png
-          file out/frieren_preview_3q.png out/frieren_preview_front.png
+          test -s out/Frieren_anatomy_base.blend
+          test -s out/anatomy_check_3q.png
+          test -s out/anatomy_check_front.png
+          file out/anatomy_check_3q.png out/anatomy_check_front.png
           ls -lh out
       - uses: actions/upload-artifact@v4
         with:
-          name: frieren-render-validation
+          name: frieren-anatomy-validation
           path: out/
           if-no-files-found: error
           retention-days: 1
