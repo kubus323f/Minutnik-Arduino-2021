@@ -9,6 +9,10 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+      - name: Install Blender runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libx11-6 libxi6 libxrender1 libxfixes3 libxkbcommon0 libsm6 libice6
       - name: Get Blender 4.5.14 LTS
         run: |
           curl -L --retry 4 -o blender.tar.xz https://download.blender.org/release/Blender4.5/blender-4.5.14-linux-x64.tar.xz
