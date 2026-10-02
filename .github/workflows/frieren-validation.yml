@@ -1,0 +1,44 @@
+name: Frieren render validation
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+jobs:
+  build-and-render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Blender runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libx11-6 libxi6 libxrender1 libxfixes3 libxkbcommon0 libsm6 libice6
+      - name: Get Blender 4.5.14 LTS
+        run: |
+          curl -L --retry 4 -o blender.tar.xz https://download.blender.org/release/Blender4.5/blender-4.5.14-linux-x64.tar.xz
+          tar -xf blender.tar.xz
+          mv blender-4.5.14-linux-x64 blender
+      - name: Get MPFB2
+        run: git clone --depth 1 https://github.com/makehumancommunity/mpfb2.git
+      - name: Build and install MPFB2 extension
+        run: |
+          ./blender/blender --command extension build --source-dir mpfb2/src/mpfb --output-filepath "$PWD/mpfb.zip"
+          ./blender/blender --command extension repo-add ci_local --name "CI Local" --directory "$PWD/.blender_extensions" --clear-all
+          ./blender/blender --command extension install-file -r ci_local -e "$PWD/mpfb.zip"
+          ./blender/blender --command extension list
+      - name: Build and render Frieren v3
+        run: ./blender/blender --background --python ci/build_frieren_v3.py
+      - name: Verify outputs
+        run: |
+          test -s out/Frieren_v3_animation_ready.blend
+          test -s out/frieren_v3_3q.png
+          test -s out/frieren_v3_front.png
+          test -s out/frieren_v3_face.png
+          file out/frieren_v3_3q.png out/frieren_v3_front.png out/frieren_v3_face.png
+          ls -lh out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frieren-v3-validation
+          path: out/
+          if-no-files-found: error
+          retention-days: 1
