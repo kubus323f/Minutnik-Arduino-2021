@@ -16,13 +16,20 @@ jobs:
           mv blender-4.5.14-linux-x64 blender
       - name: Get MPFB2
         run: git clone --depth 1 https://github.com/makehumancommunity/mpfb2.git
+      - name: Build and install MPFB2 extension
+        run: |
+          ./blender/blender --command extension build --source-dir mpfb2/src/mpfb --output-filepath "$PWD/mpfb.zip"
+          ./blender/blender --command extension repo-add ci_local --name "CI Local" --directory "$PWD/.blender_extensions" --clear-all
+          ./blender/blender --command extension install-file -r ci_local -e "$PWD/mpfb.zip"
+          ./blender/blender --command extension list
       - name: Generate, rig and render
-        run: ./blender/blender --background --factory-startup --python ci/build_frieren.py
+        run: ./blender/blender --background --python ci/run_frieren.py
       - name: Verify outputs
         run: |
           test -s out/Frieren_realistic_anatomy_rigged.blend
           test -s out/frieren_preview_3q.png
           test -s out/frieren_preview_front.png
+          file out/frieren_preview_3q.png out/frieren_preview_front.png
           ls -lh out
       - uses: actions/upload-artifact@v4
         with:
